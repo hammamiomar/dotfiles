@@ -1,0 +1,29 @@
+# Kanagawa Dragon — matches the nvim colorscheme.
+# Overrides mode chips and status bar only; everything else stays default.
+
+[mode]
+normal_main = { fg = "#181616", bg = "#76946A", bold = true }
+normal_alt  = { fg = "#98BB6C", bg = "#2D2A3E" }
+
+select_main = { fg = "#181616", bg = "#957FB8", bold = true }
+select_alt  = { fg = "#957FB8", bg = "#2D2A3E" }
+
+unset_main = { fg = "#181616", bg = "#C4746E", bold = true }
+unset_alt  = { fg = "#C4746E", bg = "#2D2A3E" }
+
+[status]
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+
+perm_sep   = { fg = "#625E5A" }
+perm_type  = { fg = "#8A9A7B" }
+perm_read  = { fg = "#C5C9C5" }
+perm_write = { fg = "#C4746E" }
+perm_exec  = { fg = "#8EA4A2" }
+
+progress_label  = { bold = true }
+progress_normal = { fg = "#76946A", bg = "#2D2A3E" }
+progress_error  = { fg = "#C5C9C5", bg = "#C4746E" }
+
+[mgr]
+cwd = { fg = "#8EA4A2" }

@@ -1,0 +1,24 @@
+# Ghostty — https://ghostty.org/docs/config
+
+theme = light:Melange Light, dark:Kanagawa Dragon
+background-opacity = 1
+background-blur = 20
+
+macos-titlebar-style = hidden
+macos-icon = glass
+macos-icon-frame = plastic
+macos-option-as-alt = left
+unfocused-split-opacity = 1
+
+# Keep the tmux status bar flush with the bottom edge
+window-padding-y = 0
+window-padding-color = extend
+
+shell-integration-features = ssh-terminfo,ssh-env
+
+# CommitMono for text; Nerd Font symbols as fallback for icon glyphs
+font-family = CommitMono
+font-family = Symbols Nerd Font Mono
+font-size = 14
+
+keybind = shift+enter=text:\x1b\r

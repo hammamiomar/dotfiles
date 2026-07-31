@@ -1,0 +1,7 @@
+# i = Quick Look the hovered file (macOS), forced to front.
+# Repeated presses replace the panel. Needs Accessibility permission
+# for the frontmost nudge; Esc or Cmd+W closes.
+[[mgr.prepend_keymap]]
+on = "i"
+run = '''shell -- pkill -f "qlmanage -p" 2>/dev/null; { qlmanage -p "$@" >/dev/null 2>&1 & }; sleep 0.3; osascript -e 'tell application "System Events" to set frontmost of process "qlmanage" to true' >/dev/null 2>&1'''
+desc = "Quick Look (floating, in front)"
