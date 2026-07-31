@@ -284,6 +284,122 @@ require("lazy").setup({
         },
       },
     },
+    config = function(_, opts)
+      require("snacks").setup(opts)
+
+      -- PATCH: persistent placements. Stock snacks destroys each image
+      -- when it scrolls off-screen and re-creates it on re-entry; that
+      -- churn (graphics traffic through tmux every scroll tick) is felt
+      -- as scroll lag. This override places every image in the buffer
+      -- once and keeps it — scrolling then just moves placeholder cells,
+      -- which the terminal handles like plain text. Images are still
+      -- closed when their source region is actually deleted. pcall
+      -- falls back to stock behavior if snacks internals ever change.
+      local Inline = require("snacks.image.inline")
+      local stock_new, stock_update = Inline.new, Inline.update
+
+      Inline.new = function(buf)
+        vim.b[buf]._img_gen = (vim.b[buf]._img_gen or 0) + 1
+        local self = stock_new(buf)
+        self.gen = vim.b[buf]._img_gen
+        -- Persistent placements never change on scroll, so the stock
+        -- WinScrolled trigger is pure overhead (it re-parses the whole
+        -- buffer per tick). Drop it: wheel scrolling runs zero plugin
+        -- code. Updates still fire on edits (on_lines / BufWritePost).
+        pcall(function()
+          for _, au in ipairs(vim.api.nvim_get_autocmds({
+            group = "snacks.image.inline." .. buf,
+            event = "WinScrolled",
+          })) do
+            vim.api.nvim_del_autocmd(au.id)
+          end
+        end)
+        return self
+      end
+
+      Inline.update = function(self)
+        -- stale instance (buffer was toggled off/on): do nothing
+        if self.gen and vim.b[self.buf]._img_gen ~= self.gen then
+          return
+        end
+        if vim.b[self.buf].snacks_image_attached == false then
+          return
+        end
+        local ok = pcall(function()
+          local conceal = Snacks.image.config.doc.conceal
+          conceal = type(conceal) ~= "function" and function()
+            return conceal
+          end or conceal
+          Snacks.image.doc.find(self.buf, function(imgs)
+            if not vim.api.nvim_buf_is_valid(self.buf) then
+              return
+            end
+            local pool = {} ---@type table<number, snacks.image.Placement>
+            for id, p in pairs(self.imgs) do
+              pool[id] = p
+            end
+            for _, i in ipairs(imgs) do
+              local img
+              for id, p in pairs(pool) do
+                if p.img.src == i.src then
+                  img, pool[id] = p, nil
+                  break
+                end
+              end
+              if img then
+                img.opts.pos = i.pos
+                img.opts.range = i.range
+                img:update()
+              else
+                img = Snacks.image.placement.new(
+                  self.buf,
+                  i.src,
+                  Snacks.config.merge({}, Snacks.image.config.doc, {
+                    pos = i.pos,
+                    range = i.range,
+                    inline = true,
+                    conceal = vim.b[self.buf].snacks_image_conceal or conceal(i.lang, i.type),
+                    type = i.type,
+                    on_update = function(p)
+                      for _, eid in ipairs(p.eids) do
+                        self.idx[eid] = p
+                      end
+                    end,
+                  })
+                )
+                for _, eid in ipairs(img.eids) do
+                  self.idx[eid] = img
+                end
+                self.imgs[img.id] = img
+              end
+            end
+            -- close only placements whose source region no longer exists
+            for id, p in pairs(pool) do
+              p:close()
+              self.imgs[id] = nil
+            end
+          end)
+        end)
+        if not ok then
+          return stock_update(self)
+        end
+      end
+
+      -- <Space>tm: toggle images/math in this buffer (skim mode)
+      vim.keymap.set("n", "<leader>tm", function()
+        local buf = vim.api.nvim_get_current_buf()
+        if vim.b[buf].snacks_image_attached then
+          vim.b[buf]._img_gen = (vim.b[buf]._img_gen or 0) + 1
+          pcall(vim.api.nvim_del_augroup_by_name, "snacks.image.inline." .. buf)
+          vim.api.nvim_buf_clear_namespace(buf, Snacks.image.placement.ns, 0, -1)
+          vim.b[buf].snacks_image_attached = false
+          vim.notify("images off (skim mode)")
+        else
+          Snacks.image.doc.attach(buf)
+          vim.notify("images on")
+        end
+      end, { desc = "Toggle images/math in buffer" })
+    end,
   },
 
   -- Inline math ($...$) concealed to unicode text: ∈ γ ℝ 𝒳 ‖·‖ x².
