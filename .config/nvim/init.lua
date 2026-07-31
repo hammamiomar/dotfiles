@@ -253,7 +253,25 @@ require("lazy").setup({
     opts = {
       image = {
         enabled = true,
-        math = { latex = { font_size = "small" } }, -- default Large is huge
+        math = {
+          latex = {
+            font_size = "small", -- default Large is huge
+            -- default template minus varwidth, plus a huge line width:
+            -- display math typesets inside the line width, so the stock
+            -- ~5in limit crops wide blocks inside the generated PDF.
+            -- The -trim convert step crops back to actual ink.
+            tpl = [[
+              \documentclass[preview,border=2pt,12pt]{standalone}
+              \usepackage{${packages}}
+              \begin{document}
+              \hsize=50cm \linewidth=50cm \displaywidth=50cm
+              ${header}
+              { \${font_size} \selectfont
+                \color[HTML]{${color}}
+              ${content}}
+              \end{document}]],
+          },
+        },
         convert = {
           magick = {
             -- higher density for crisp retina rendering (default 192)
