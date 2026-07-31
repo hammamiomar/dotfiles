@@ -243,8 +243,8 @@ require("lazy").setup({
     },
   },
 
-  -- Inline images and typeset LaTeX math in markdown (kitty graphics
-  -- protocol; requires imagemagick + a latex install for math)
+  -- Inline images in markdown via the kitty graphics protocol.
+  -- Math is intentionally off — nabla renders it as text instead.
   {
     "folke/snacks.nvim",
     lazy = false,
@@ -252,15 +252,31 @@ require("lazy").setup({
     opts = {
       image = {
         enabled = true,
-        math = { latex = { font_size = "normalsize" } }, -- default Large is huge
-        convert = {
-          magick = {
-            -- higher density for crisp retina rendering (default 192)
-            math = { "-density", "320", "{src}[{page}]", "-trim" },
-          },
-        },
+        math = { enabled = false },
       },
     },
+  },
+
+  -- LaTeX math as unicode text: crisp at any font size, never clipped.
+  -- Renders inline automatically in markdown; <Space>m pops up the
+  -- expression under the cursor, drawn large.
+  {
+    "jbyuki/nabla.nvim",
+    ft = "markdown",
+    keys = {
+      { "<leader>m", function() require("nabla").popup({ border = "rounded" }) end, desc = "Math popup" },
+    },
+    config = function()
+      local function render_math()
+        pcall(require("nabla").enable_virt, { autogen = true })
+      end
+      vim.api.nvim_create_autocmd("FileType", {
+        group = aug,
+        pattern = "markdown",
+        callback = render_math,
+      })
+      if vim.bo.filetype == "markdown" then render_math() end
+    end,
   },
 
   {
