@@ -243,9 +243,8 @@ require("lazy").setup({
     },
   },
 
-  -- Inline images and typeset LaTeX math in markdown (kitty graphics
-  -- protocol; needs imagemagick + a latex install). Text-based math
-  -- (nabla) was tried and dropped: it can't draw aligned environments.
+  -- Inline images in markdown (plots, masks) via the kitty graphics
+  -- protocol. Math is off here — render-latex.nvim handles it.
   {
     "folke/snacks.nvim",
     lazy = false,
@@ -253,33 +252,18 @@ require("lazy").setup({
     opts = {
       image = {
         enabled = true,
-        math = {
-          latex = {
-            font_size = "small", -- default Large is huge
-            -- default template minus varwidth, plus a huge line width:
-            -- display math typesets inside the line width, so the stock
-            -- ~5in limit crops wide blocks inside the generated PDF.
-            -- The -trim convert step crops back to actual ink.
-            tpl = [[
-              \documentclass[preview,border=2pt,12pt]{standalone}
-              \usepackage{${packages}}
-              \begin{document}
-              \hsize=50cm \linewidth=50cm \displaywidth=50cm
-              ${header}
-              { \${font_size} \selectfont
-                \color[HTML]{${color}}
-              ${content}}
-              \end{document}]],
-          },
-        },
-        convert = {
-          magick = {
-            -- higher density for crisp retina rendering (default 192)
-            math = { "-density", "320", "{src}[{page}]", "-trim" },
-          },
-        },
+        math = { enabled = false },
       },
     },
+  },
+
+  -- LaTeX math for markdown. Display blocks render via a Rust worker
+  -- (RaTeX — no TeX install needed), sized and colored to match the
+  -- editor text. Inline math stays text, concealed to unicode symbols.
+  {
+    "techwizrd/render-latex.nvim",
+    ft = "markdown",
+    opts = {},
   },
 
   {
