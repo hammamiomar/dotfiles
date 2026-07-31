@@ -243,8 +243,11 @@ require("lazy").setup({
     },
   },
 
-  -- Inline images in markdown (plots, masks) via the kitty graphics
-  -- protocol. Math is off here — render-latex.nvim handles it.
+  -- Images + DISPLAY math ($$ blocks) in markdown. Unicode-placeholder
+  -- rendering, so images stay inside their tmux pane. Inline math is
+  -- excluded via queries/latex/images.scm — mdmath handles it instead.
+  -- (History: nabla crashed on aligned envs; render-latex.nvim drew
+  -- over other tmux panes — no placeholder support on nvim 0.12.)
   {
     "folke/snacks.nvim",
     lazy = false,
@@ -252,18 +255,49 @@ require("lazy").setup({
     opts = {
       image = {
         enabled = true,
-        math = { enabled = false },
+        math = {
+          latex = {
+            font_size = "small", -- default Large is huge
+            -- default template minus varwidth, plus a huge line width:
+            -- display math typesets inside the line width, so the stock
+            -- ~5in limit crops wide blocks inside the generated PDF.
+            -- The -trim convert step crops back to actual ink.
+            tpl = [[
+              \documentclass[preview,border=2pt,12pt]{standalone}
+              \usepackage{${packages}}
+              \begin{document}
+              \hsize=50cm \linewidth=50cm \displaywidth=50cm
+              ${header}
+              { \${font_size} \selectfont
+                \color[HTML]{${color}}
+              ${content}}
+              \end{document}]],
+          },
+        },
+        convert = {
+          magick = {
+            -- higher density for crisp retina rendering (default 192)
+            math = { "-density", "320", "{src}[{page}]", "-trim" },
+          },
+        },
       },
     },
   },
 
-  -- LaTeX math for markdown. Display blocks render via a Rust worker
-  -- (RaTeX — no TeX install needed), sized and colored to match the
-  -- editor text. Inline math stays text, concealed to unicode symbols.
+  -- INLINE math ($...$) rendered via MathJax, sized to the editor text,
+  -- also unicode-placeholder based (tmux-safe). Complements snacks:
+  -- mdmath only does inline; snacks only does display blocks.
   {
-    "techwizrd/render-latex.nvim",
+    "Thiago4532/mdmath.nvim",
     ft = "markdown",
-    opts = {},
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    build = ":MdmathBuild",
+    opts = {
+      foreground = "Normal",
+      anticonceal = true,   -- expression reappears as text under the cursor
+      hide_on_insert = true,
+      dynamic = true,       -- scale with the editor font
+    },
   },
 
   {
