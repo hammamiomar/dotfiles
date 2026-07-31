@@ -250,7 +250,16 @@ require("lazy").setup({
     lazy = false,
     priority = 1000,
     opts = {
-      image = { enabled = true },
+      image = {
+        enabled = true,
+        math = { latex = { font_size = "normalsize" } }, -- default Large is huge
+        convert = {
+          magick = {
+            -- higher density for crisp retina rendering (default 192)
+            math = { "-density", "320", "{src}[{page}]", "-trim" },
+          },
+        },
+      },
     },
   },
 
