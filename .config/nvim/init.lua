@@ -125,7 +125,8 @@ require("lazy").setup({
     config = function()
       require("nvim-treesitter").install({
         "bash", "css", "diff", "fish", "go", "gomod", "html", "javascript",
-        "json", "lua", "markdown", "markdown_inline", "python",
+        "json", "latex", -- latex parser is required for snacks.image math
+        "lua", "markdown", "markdown_inline", "python",
         "regex", "rust", "toml", "tsx", "typescript", "vim", "vimdoc", "yaml",
       })
       vim.api.nvim_create_autocmd("FileType", {
