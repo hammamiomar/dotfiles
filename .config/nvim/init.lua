@@ -89,6 +89,7 @@ local map = vim.keymap.set
 map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
 map("n", "<leader>w", "<cmd>write<cr>", { desc = "Save file" })
 map("n", "<leader>q", "<cmd>quit<cr>", { desc = "Close window" })
+map("n", "<leader>x", "<cmd>bdelete<cr>", { desc = "Close buffer (keep window)" })
 map("n", "<leader>d", vim.diagnostic.open_float, { desc = "Diagnostic under cursor" })
 
 map("n", "<C-d>", "<C-d>zz", { desc = "Half page down (centered)" })
@@ -186,8 +187,18 @@ require("lazy").setup({
       local tb = require("telescope.builtin")
       map("n", "<leader>f", function() tb.find_files({ hidden = true }) end, { desc = "Find file" })
       map("n", "<leader>g", tb.live_grep, { desc = "Grep project" })
-      map("n", "<leader>b", function() tb.buffers({ sort_mru = true, ignore_current_buffer = true }) end,
-        { desc = "Buffers (recent first)" })
+      map("n", "<leader>b", function()
+        tb.buffers({
+          sort_mru = true,
+          ignore_current_buffer = true,
+          attach_mappings = function(_, m)
+            local actions = require("telescope.actions")
+            m("i", "<C-d>", actions.delete_buffer) -- close buffers from the picker
+            m("n", "<C-d>", actions.delete_buffer)
+            return true
+          end,
+        })
+      end, { desc = "Buffers (recent first)" })
       map("n", "<leader>*", tb.grep_string, { desc = "Grep word under cursor" })
       map("n", "<leader>r", tb.resume, { desc = "Resume last picker" })
       map("n", "<leader>?", tb.keymaps, { desc = "Search keymaps" })
