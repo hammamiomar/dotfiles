@@ -237,7 +237,20 @@ require("lazy").setup({
     "MeanderingProgrammer/render-markdown.nvim",
     ft = "markdown",
     dependencies = { "nvim-treesitter/nvim-treesitter", "echasnovski/mini.icons" },
-    opts = {},
+    opts = {
+      latex = { enabled = false }, -- snacks.image typesets latex instead
+    },
+  },
+
+  -- Inline images and typeset LaTeX math in markdown (kitty graphics
+  -- protocol; requires imagemagick + a latex install for math)
+  {
+    "folke/snacks.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {
+      image = { enabled = true },
+    },
   },
 
   {
