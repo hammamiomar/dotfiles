@@ -245,9 +245,11 @@ require("lazy").setup({
 
   -- Images + DISPLAY math ($$ blocks) in markdown. Unicode-placeholder
   -- rendering, so images stay inside their tmux pane. Inline math is
-  -- excluded via queries/latex/images.scm — mdmath handles it instead.
-  -- (History: nabla crashed on aligned envs; render-latex.nvim drew
-  -- over other tmux panes — no placeholder support on nvim 0.12.)
+  -- excluded via queries/latex/images.scm — math-conceal renders it as
+  -- unicode text instead. Display = images, inline = text: a terminal's
+  -- fixed line height can't fit variable-height inline images (tried:
+  -- nabla crashed on aligned envs; render-latex.nvim and mdmath drew
+  -- over other tmux panes / double-rendered $$ blocks).
   {
     "folke/snacks.nvim",
     lazy = false,
@@ -284,19 +286,20 @@ require("lazy").setup({
     },
   },
 
-  -- INLINE math ($...$) rendered via MathJax, sized to the editor text,
-  -- also unicode-placeholder based (tmux-safe). Complements snacks:
-  -- mdmath only does inline; snacks only does display blocks.
+  -- Inline math ($...$) concealed to unicode text: ∈ γ ℝ 𝒳 ‖·‖ x².
+  -- Text can't have scale/placement/pane problems — that's the point.
+  -- Display blocks stay images (snacks); this touches inline only.
+  -- No build step: cargo is only for its image renderer, which is off.
   {
-    "Thiago4532/mdmath.nvim",
-    ft = "markdown",
-    dependencies = { "nvim-treesitter/nvim-treesitter" },
-    build = ":MdmathBuild",
+    "pxwg/math-conceal.nvim",
+    ft = { "markdown" },
+    main = "math-conceal",
     opts = {
-      foreground = "Normal",
-      anticonceal = true,   -- expression reappears as text under the cursor
-      hide_on_insert = true,
-      dynamic = true,       -- scale with the editor font
+      conceal = { "greek", "script", "math", "font", "delim" },
+      ft = { "markdown" },
+      opt = { conceallevel = 3, concealcursor = "" }, -- match render-markdown so they don't flap
+      buffer = { mode = "edit" }, -- expression un-conceals under the cursor
+      image = { enabled = false },
     },
   },
 
